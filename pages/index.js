@@ -14,17 +14,36 @@ export default function Home() {
   const [emotion, setEmotion] = useState(null);
   const [playlist, setPlaylist] = useState(null);
 
-  const detectEmotion = () => {
-    const lowerText = text.toLowerCase();
-    let detected = "relaxed";
-    if (lowerText.includes("开心") || lowerText.includes("happy")) detected = "happy";
-    else if (lowerText.includes("难过") || lowerText.includes("sad")) detected = "sad";
-    else if (lowerText.includes("生气") || lowerText.includes("angry")) detected = "angry";
-    else if (lowerText.includes("焦虑") || lowerText.includes("anxious")) detected = "anxious";
-
-    setEmotion(detected);
-    setPlaylist(emotionMap[detected]);
+  const detectEmotion = async () => {
+    if (!text.trim()) return;
+  
+    try {
+      const res = await fetch("http://localhost:8003/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }), // 发送用户输入
+      });
+  
+      const data = await res.json();
+      console.log("识别情绪：", data.label);
+  
+      // 映射情绪到歌单（你可以自定义对应关系）
+      const emotionMap = {
+        joy: "https://open.spotify.com/playlist/37i9dQZF1DXdPec7aLTmlC",
+        sadness: "https://open.spotify.com/playlist/37i9dQZF1DWVrtsSlLKzro",
+        anger: "https://open.spotify.com/playlist/37i9dQZF1DWY5xidiQ2cUq",
+        fear: "https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO",
+        surprise: "https://open.spotify.com/playlist/37i9dQZF1DX4WYpdgoIcn6",
+        neutral: "https://open.spotify.com/playlist/37i9dQZF1DWU0u5wHyUwhs",
+      };
+  
+      setEmotion(data.label);
+      setPlaylist(emotionMap[data.label] || null);
+    } catch (err) {
+      console.error("调用情绪识别 API 出错", err);
+    }
   };
+  
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', backgroundColor: '#f3f4f6' }}>
